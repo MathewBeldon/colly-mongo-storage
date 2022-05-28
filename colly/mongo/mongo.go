@@ -2,10 +2,11 @@ package mongo
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"net/url"
 	"strconv"
+
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -14,12 +15,14 @@ import (
 
 // Storage implements a MongoDB storage backend for colly
 type Storage struct {
-	Database string
-	URI      string
-	client   *mongo.Client
-	db       *mongo.Database
-	visited  *mongo.Collection
-	cookies  *mongo.Collection
+	Database          string
+	URI               string
+	VisitedCollection string "colly_visited"
+	CookiesCollection string "colly_cookies"
+	client            *mongo.Client
+	db                *mongo.Database
+	visited           *mongo.Collection
+	cookies           *mongo.Collection
 }
 
 // Init initializes the MongoDB storage
@@ -40,9 +43,9 @@ func (s *Storage) Init() error {
 
 	s.db = s.client.Database(s.Database)
 
-	s.visited = s.db.Collection("colly_visited")
+	s.visited = s.db.Collection(s.VisitedCollection)
 
-	s.cookies = s.db.Collection("colly_cookies")
+	s.cookies = s.db.Collection(s.CookiesCollection)
 
 	return nil
 
