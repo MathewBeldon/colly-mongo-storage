@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"strconv"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -19,10 +20,12 @@ type Storage struct {
 	URI               string
 	VisitedCollection string "colly_visited"
 	CookiesCollection string "colly_cookies"
+	PagesCollection   string "colly_pages"
 	client            *mongo.Client
 	db                *mongo.Database
 	visited           *mongo.Collection
 	cookies           *mongo.Collection
+	pages             *mongo.Collection
 }
 
 // Init initializes the MongoDB storage
@@ -35,6 +38,7 @@ func (s *Storage) Init() error {
 		return err
 
 	}
+
 	if err = s.client.Connect(context.Background()); err != nil {
 
 		return err
@@ -46,6 +50,8 @@ func (s *Storage) Init() error {
 	s.visited = s.db.Collection(s.VisitedCollection)
 
 	s.cookies = s.db.Collection(s.CookiesCollection)
+
+	s.pages = s.db.Collection(s.PagesCollection)
 
 	return nil
 
@@ -118,6 +124,22 @@ func (s *Storage) SetCookies(u *url.URL, cookies string) {
 	if _, err := s.cookies.InsertOne(nil, bsonx.MDoc{
 		"host":    bsonx.String(u.Host),
 		"cookies": bsonx.String(cookies),
+	}); err != nil {
+
+		log.Println(err)
+
+	}
+
+}
+
+// SavePage not part of colly
+func (s *Storage) SavePage(requestID uint64, u *url.URL, body []byte) {
+
+	if _, err := s.pages.InsertOne(nil, bsonx.MDoc{
+		"requestID": bsonx.String(strconv.FormatUint(requestID, 10)),
+		"dateTime":  bsonx.String(time.Now().UTC().String()),
+		"url":       bsonx.String(u.String()),
+		"body":      bsonx.Binary(0, body),
 	}); err != nil {
 
 		log.Println(err)
